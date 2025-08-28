@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import AstrologerProfile from "../models/AstrologerProfile.js";
-
 const router = express.Router();
 
 const signJWT = (user) => jwt.sign(
