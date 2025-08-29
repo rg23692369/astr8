@@ -1,9 +1,5 @@
-{
-  "version": 2,
-  "builds": [
-    { "src": "package.json", "use": "@vercel/static-build" }
-  ],
-  "routes": [
-    { "src": "/(.*)", "dest": "/index.html" }
-  ]
+"scripts": {
+  "dev": "nodemon src/index.js",
+  "start": "node src/index.js",
+  "vercel-build": "echo 'Build step not required for backend'"
 }
