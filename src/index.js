@@ -14,10 +14,9 @@ import paymentRoutes from "./routes/payments.js";
 dotenv.config();
 
 const app = express();
-app.use('/uploads', express.static('uploads'));
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
-const PORT = process.env.PORT || 4000;
-const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
+
+// ✅ Serve static uploads folder
+app.use("/uploads", express.static("uploads"));
 
 // ✅ Middleware
 app.use(express.json());
@@ -29,7 +28,7 @@ const allowedOrigins = process.env.CLIENT_URL
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
     credentials: true,
   })
 );
@@ -44,29 +43,27 @@ app.use("/api/auth", authRoutes);
 app.use("/api/astrologers", astrologerRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/ai", aiRoutes);
 
-// ✅ Config checks
+// ✅ MongoDB connection (safe for Vercel serverless)
+const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
 if (!MONGO_URI) {
   console.error("❌ Missing MONGO_URI/MONGODB_URI in .env");
   process.exit(1);
 }
 
-if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-  console.warn("⚠️ Razorpay keys missing → Payments will run in dummy mode.");
-}
-
-// ✅ Connect to MongoDB & start server
-mongoose
-  .connect(MONGO_URI, { autoIndex: true })
-  .then(() => {
+let isConnected = false;
+async function connectDB() {
+  if (isConnected) return;
+  try {
+    await mongoose.connect(MONGO_URI, { autoIndex: true });
+    isConnected = true;
     console.log("✅ MongoDB connected");
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running → http://localhost:${PORT}`);
-    });
-  })
-  .catch((err) => {
+  } catch (err) {
     console.error("❌ MongoDB connection error:", err?.message || err);
-    process.exit(1);
-  });
+  }
+}
+connectDB();
 
-app.use("/api/ai", aiRoutes);
+// ✅ Export app for Vercel (no app.listen here)
+export default app;
